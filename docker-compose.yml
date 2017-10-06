@@ -1,0 +1,10 @@
+version: '2'
+services:
+  extractor:
+    build: .
+    image: pocin/kbc-ex-bing-ads:latest
+    tty: true
+    stdin_open: true
+    command: /bin/ash
+    volumes:
+      - ./:/src/
