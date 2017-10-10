@@ -1,5 +1,6 @@
 import traceback
 import sys
+from exbingads.extractor import parse_config
 
 def main():
     print("Hello")
