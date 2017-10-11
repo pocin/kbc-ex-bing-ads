@@ -1,5 +1,8 @@
 {
     "parameters": {
-        "apikey": "foo"
+        "accountId": "foo",
+        "customerId": "bar",
+        "#devKey": 123,
+        "bucket": "out.c-main"
     }
 }
