@@ -1,13 +1,16 @@
 from bingads.service_client import ServiceClient
 from bingads.authorization import *
 from bingads.v11.bulk import *
+from bingads.v11.reporting import *
 import sys
 import webbrowser
 from time import gmtime, strftime
+import datetime
 from suds import WebFault
 import datetime
 from hashlib import md5
 
+import logging
 
 class AuthClient:
     # It is recommended that you specify a non guessable 'state' request parameter to help prevent
@@ -44,6 +47,8 @@ class AuthClient:
         self._refresh_token = refresh_token
         self._environment = environment
         self.client_id = client_id
+        self.account_id = account_id
+        self.customer_id = customer_id
         self.CLIENT_STATE = md5(str(datetime.datetime.now()).encode(
             'utf-8')).hexdigest()
 
@@ -51,23 +56,7 @@ class AuthClient:
             account_id=account_id,
             customer_id=customer_id,
             developer_token=developer_token,
-            authentication=authentication, )
-        self.bulk_service_manager = BulkServiceManager(
-            authorization_data=self.authorization_data,
-            poll_interval_in_milliseconds=5000,
-            environment=self._environment, )
-
-        self.campaign_service = ServiceClient(
-            service='CampaignManagementService',
-            authorization_data=self.authorization_data,
-            environment=self._environment,
-            version=11, )
-
-        self.customer_service = ServiceClient(
-            'CustomerManagementService',
-            authorization_data=self.authorization_data,
-            environment=self._environment,
-            version=11, )
+            authentication=authentication)
 
     def _authenticate_with_username(self,
                                     user_name="UserNameGoesHere",
@@ -148,3 +137,121 @@ class AuthClient:
         # Request access and refresh tokens using the URI that you provided manually during program execution.
         self.authorization_data.authentication.request_oauth_tokens_by_response_uri(
             response_uri=response_uri)
+
+    def _output_bing_ads_webfault_error(self, error):
+        if hasattr(error, 'ErrorCode'):
+            logging.error("ErrorCode: {0}".format(error.ErrorCode))
+        if hasattr(error, 'Code'):
+            logging.error("Code: {0}".format(error.Code))
+        if hasattr(error, 'Message'):
+            logging.error("Message: {0}".format(error.Message))
+            logging.error('')
+
+    def _output_webfault_errors(self, ex):
+        if hasattr(ex.fault, 'detail') \
+        and hasattr(ex.fault.detail, 'ApiFault') \
+        and hasattr(ex.fault.detail.ApiFault, 'OperationErrors') \
+        and hasattr(ex.fault.detail.ApiFault.OperationErrors, 'OperationError'):
+            api_errors=ex.fault.detail.ApiFault.OperationErrors.OperationError
+            if type(api_errors) == list:
+                for api_error in api_errors:
+                    output_bing_ads_webfault_error(api_error)
+            else:
+                output_bing_ads_webfault_error(api_errors)
+        elif hasattr(ex.fault, 'detail') \
+            and hasattr(ex.fault.detail, 'AdApiFaultDetail') \
+            and hasattr(ex.fault.detail.AdApiFaultDetail, 'Errors') \
+            and hasattr(ex.fault.detail.AdApiFaultDetail.Errors, 'AdApiError'):
+            api_errors=ex.fault.detail.AdApiFaultDetail.Errors.AdApiError
+            if type(api_errors) == list:
+                for api_error in api_errors:
+                    output_bing_ads_webfault_error(api_error)
+            else:
+                output_bing_ads_webfault_error(api_errors)
+        elif hasattr(ex.fault, 'detail') \
+            and hasattr(ex.fault.detail, 'ApiFaultDetail') \
+            and hasattr(ex.fault.detail.ApiFaultDetail, 'BatchErrors') \
+            and hasattr(ex.fault.detail.ApiFaultDetail.BatchErrors, 'BatchError'):
+            api_errors=ex.fault.detail.ApiFaultDetail.BatchErrors.BatchError
+            if type(api_errors) == list:
+                for api_error in api_errors:
+                    output_bing_ads_webfault_error(api_error)
+            else:
+                output_bing_ads_webfault_error(api_errors)
+        elif hasattr(ex.fault, 'detail') \
+            and hasattr(ex.fault.detail, 'ApiFaultDetail') \
+            and hasattr(ex.fault.detail.ApiFaultDetail, 'OperationErrors') \
+            and hasattr(ex.fault.detail.ApiFaultDetail.OperationErrors, 'OperationError'):
+            api_errors=ex.fault.detail.ApiFaultDetail.OperationErrors.OperationError
+            if type(api_errors) == list:
+                for api_error in api_errors:
+                    output_bing_ads_webfault_error(api_error)
+            else:
+                output_bing_ads_webfault_error(api_errors)
+        elif hasattr(ex.fault, 'detail') \
+            and hasattr(ex.fault.detail, 'EditorialApiFaultDetail') \
+            and hasattr(ex.fault.detail.EditorialApiFaultDetail, 'BatchErrors') \
+            and hasattr(ex.fault.detail.EditorialApiFaultDetail.BatchErrors, 'BatchError'):
+            api_errors=ex.fault.detail.EditorialApiFaultDetail.BatchErrors.BatchError
+            if type(api_errors) == list:
+                for api_error in api_errors:
+                    output_bing_ads_webfault_error(api_error)
+            else:
+                output_bing_ads_webfault_error(api_errors)
+        elif hasattr(ex.fault, 'detail') \
+            and hasattr(ex.fault.detail, 'EditorialApiFaultDetail') \
+            and hasattr(ex.fault.detail.EditorialApiFaultDetail, 'EditorialErrors') \
+            and hasattr(ex.fault.detail.EditorialApiFaultDetail.EditorialErrors, 'EditorialError'):
+            api_errors=ex.fault.detail.EditorialApiFaultDetail.EditorialErrors.EditorialError
+            if type(api_errors) == list:
+                for api_error in api_errors:
+                    output_bing_ads_webfault_error(api_error)
+            else:
+                output_bing_ads_webfault_error(api_errors)
+        elif hasattr(ex.fault, 'detail') \
+            and hasattr(ex.fault.detail, 'EditorialApiFaultDetail') \
+            and hasattr(ex.fault.detail.EditorialApiFaultDetail, 'OperationErrors') \
+            and hasattr(ex.fault.detail.EditorialApiFaultDetail.OperationErrors, 'OperationError'):
+            api_errors=ex.fault.detail.EditorialApiFaultDetail.OperationErrors.OperationError
+            if type(api_errors) == list:
+                for api_error in api_errors:
+                    output_bing_ads_webfault_error(api_error)
+            else:
+                output_bing_ads_webfault_error(api_errors)
+                # Handle serialization errors e.g. The formatter threw an exception while trying to deserialize the message: 
+                # There was an error while trying to deserialize parameter https://bingads.microsoft.com/CampaignManagement/v10:Entities.
+        elif hasattr(ex.fault, 'detail') \
+            and hasattr(ex.fault.detail, 'ExceptionDetail'):
+            api_errors=ex.fault.detail.ExceptionDetail
+            if type(api_errors) == list:
+                for api_error in api_errors:
+                    logging.error(api_error.Message)
+            else:
+                logging.error(api_errors.Message)
+        else:
+            raise Exception('Unknown WebFault')
+
+    def _output_bulk_campaigns(self, bulk_entities):
+        for entity in bulk_entities:
+            logging.error("BulkCampaign: \n")
+            logging.error("Campaign Name: {0}".format(entity.campaign.Name))
+            logging.error("Campaign Id: {0}".format(entity.campaign.Id))
+
+            if entity.has_errors:
+                output_bulk_errors(entity.errors)
+
+            logging.error('')
+
+    def _output_bulk_errors(self, errors):
+        for error in errors:
+            if error.error is not None:
+                logging.error("Number: {0}".format(error.error))
+                logging.error("Error: {0}".format(error.number))
+            if error.editorial_reason_code is not None:
+                logging.error("EditorialTerm: {0}".format(error.editorial_term))
+                logging.error("EditorialReasonCode: {0}".format(error.editorial_reason_code))
+                logging.error("EditorialLocation: {0}".format(error.editorial_location))
+                logging.error("PublisherCountries: {0}".format(error.publisher_countries))
+                logging.error('')
+
+
