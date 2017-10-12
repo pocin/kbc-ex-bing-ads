@@ -276,18 +276,19 @@ class Client(AuthClient):
         report_request.ReturnOnlyCompleteData = complete_data
         report_request.Aggregation = aggregation
         report_request.Language = 'English'
+        report_request.ExcludeReportFooter = True
+        report_request.ExcludeReportHeader = True
 
         scope = self.reporting_service.factory.create(
             'AccountThroughAdGroupReportScope')
         scope.AccountIds = {'long': [self.authorization_data.account_id]}
         scope.Campaigns = None
         scope.AdGroups = None
+ 
         report_request.Scope = scope
 
         report_time = self.reporting_service.factory.create('ReportTime')
         # You may either use a custom date range or predefined time.
-
-        # TODO parse config start date here
 
         # can supply either predefined time or start/end date
         # if both are defined, the predefined time has priority over custom
@@ -301,9 +302,9 @@ class Client(AuthClient):
                                  "not '{}'".format(self.predefined_times,
                                                    predefined_time))
         else:
-            yesterday = (datetime.datetime.utcnow() - datetime.timedelta(days=1)).date()
+            yesterday = (datetime.datetime.utcnow() - datetime.timedelta(days=0)).date()
             if start_date:
-                start_dt = datetime.strptime(start_date, '%d-%m-%Y').date()
+                start_dt = self._clean_date(start_date)
                 logging.info(
                     "Building report with startTime %s", start_dt)
                 custom_date_range_start = self._custom_date_range(
@@ -315,15 +316,15 @@ class Client(AuthClient):
                     "use format %d-%m-%Y, or define `predefined_time`")
 
             if end_date:
-                end_dt = datetime.strptime(end_date, '%d-%m-%Y').date()
+                end_dt = self._clean_date(end_date)
                 logging.info(
                     "Building report with endTime %s", end_dt)
-                custom_date_range_start = self._custom_date_range(
+                custom_date_range_end = self._custom_date_range(
                     end_dt.day, end_dt.month, end_dt.year)
             else:
                 custom_date_range_end = self._custom_date_range(
                     yesterday.day, yesterday.month, yesterday.year)
-                # Default to today
+                # Default to yesterday
                 logging.info(
                     "Building report with endTime %s (yesterday),"
                     " because endTime parameter is not set.", yesterday)
@@ -346,16 +347,20 @@ class Client(AuthClient):
     def download_ad_performance_report(self,
                                        outdir='/tmp/exbingads_reports',
                                        report_filename='AdPerformance.csv',
-
-                                       start_date=None,
-                                       end_date=None,
-                                       complete_data=True,
+                                       startDate=None,
+                                       endDate=None,
+                                       predefinedTime=None,
+                                       completeData=True,
                                        columns=None,
                                        aggregation='Daily'):
         """Send a request for downloading the report, wait for completition
 
         Also create a manifest for uploading to storage
         """
+        start_date = startDate
+        end_date = endDate
+        predefined_time = predefinedTime
+        complete_data = completeData
         try:
             os.makedirs(outdir)
         except FileExistsError:
@@ -381,7 +386,19 @@ class Client(AuthClient):
         outpath = self.reporting_service_manager.download_file(
             reporting_download_parameters)
         if outpath is not None:
-            logging.info("No data to download!!!")
+            logging.info("No data was downloaded, perhaps no campaigns are running?")
         else:
             logging.info("Report downloaded to %s", outpath)
         return outpath
+
+    def _clean_date(self, dt):
+        if isinstance(dt, str):
+            start_dt = datetime.strptime(dt, '%d-%m-%Y').date()
+        elif isinstance(dt, (datetime.datetime, datetime.date)):
+            start_dt = dt
+        else:
+            raise ValueError("datetime parameter must be"
+                             " str in %d-%m-%Y format, or datetime object"
+                             " not %s", dt)
+
+        return start_dt

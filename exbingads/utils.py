@@ -114,7 +114,7 @@ def output_webfault_errors(ex):
         else:
             logging.error(api_errors.Message)
     else:
-        raise Exception('Unknown WebFault')
+        raise ex
 
 
 def output_bulk_campaigns(bulk_entities):
@@ -194,3 +194,30 @@ def write_manifest(csvpath, bucket, table, incremental, pk_columns=None):
     with open(manifest_path, 'w') as fh:
         json.dump(config, fh)
     return manifest_path
+
+
+def parse_statefile(datadir):
+    """
+    Statefile is used to store when the component was last ran
+
+    {
+       'lastRun': iso8601 timestamp
+    }
+    """
+    with open(os.path.join(datadir, 'in/state.json'), 'w') as f:
+        try:
+            state = json.load(f)
+        except json.JSONDecodeError:
+            state = {}
+        return state
+
+def write_statefile(datadir, new_state):
+    """
+    Statefile is used to store when the component was last ran
+
+    {
+       'lastRun': iso8601 timestamp
+    }
+    """
+    with open(os.path.join(datadir, 'out/state.json'), 'w') as f:
+        json.dump(new_state, f)
