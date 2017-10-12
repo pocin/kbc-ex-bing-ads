@@ -36,8 +36,16 @@ def test_authenticating_client():
 def client():
     return _make_client()
 
-# def test_client_download_report():
-#     pass
+def test_client_download_report_predefined_time(client):
+
+    out = client.download_ad_performance_report(
+        outdir='tests/data/out/tables/',
+        predefined_time='LastSevenDays'
+        )
+    if isinstance(out, str):
+        assert os.stat(out).st_size > 0
+    # can be None, which probably means there is no data to download
+    # - maybe we might write an empty csv??
 
 def test_client_download_report_predefined_time_sandbox(sbx):
     out = sbx.download_ad_performance_report(

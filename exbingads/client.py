@@ -84,8 +84,10 @@ class AuthClient:
         '''
         # If you already have both an access token and refresh token,
         # then you can construct OAuthDesktopMobileAuthCodeGrant with OAuthTokens.
-        authentication = OAuthDesktopMobileAuthCodeGrant(
+        authentication = OAuthWebAuthCodeGrant(
             client_id=self.client_id,
+            client_secret=self.client_secret,
+            redirection_uri='http://localhost',
             oauth_tokens=OAuthTokens(
                 access_token=None,
                 access_token_expires_in_seconds=0,
@@ -108,11 +110,22 @@ class AuthClient:
                 self.authorization_data.authentication.request_oauth_tokens_by_refresh_token(
                     self.refresh_token)
             else:
-                self._request_user_consent()
-        except OAuthTokenRequestException:
+                # If using this not in kbc, call this method for interactive authorization
+                # self._request_user_consent()
+                raise AuthenticationError(
+                    "For use in keboola you must supply a refresh token in the "
+                    "configuration. For interactive use, call the"
+                    "self._request_user_consent() method to trigger "
+                    "the auth process"
+                                          "")
+        except OAuthTokenRequestException as e:
             # The user could not be authenticated or the grant is expired.
             # The user must first sign in and if needed grant the client application access to the requested scope.
-            self._request_user_consent()
+
+            # If using this not in kbc, call this method for interactive authorization
+            # self._request_user_consent()
+            logging.error(e)
+            raise AuthenticationError("Refresh token is invalid, or expired. Please reauthorize the application!")
 
 
     @property
