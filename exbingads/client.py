@@ -10,26 +10,30 @@ import datetime
 from suds import WebFault
 import datetime
 from hashlib import md5
-from exbingads.utils import log_soap_errors
+from exbingads.utils import log_soap_errors, AuthenticationError
 
 import logging
+logging.basicConfig(level=logging.INFO)
 
 
 class AuthClient:
-    # It is recommended that you specify a non guessable 'state' request parameter to help prevent
-    # cross site request forgery (CSRF).
-
     def __init__(self,
                  developer_token,
                  client_id,
+                 client_secret=None,
                  refresh_token=None,
                  customer_id=None,
                  account_id=None,
-                 authentication=None,
-                 environment='production'):
+                 environment='production',
+                 _username=None, # for sandbox use
+                 _password=None,
+                 _devkey=None):
         """
-        Authenticate a client and prepare "Services" for calling the api
+        This class only manages authentication and you generally dont need to use
+        it, rather use the Client child class
 
+        For use in keboola (non-interactive) you must supply refresh token (OAuth bundle manages this)
+        otherwise you will be prompted for user consent which is interactive.
 
         Args:
             developer_token: get from https://developers.bingads.microsoft.com/Account
@@ -37,18 +41,14 @@ class AuthClient:
             refresh_token: (optional) if you have one, otherwise the next step will trigger OAuth webbrowser flow
             customer_id: # https://bingads.microsoft.com/cc/accounts
             account_id: # https://bingads.microsoft.com/cc/accounts
-            authentication: leave blank probably?
-
-        Usage
-            >>> client = AuthClient(**kwargs)
-            >>> #will either prompt you for uri or succeede if refresh_token was supplied
-            >>> client.authenticate_with_oauth()
-            >>> # actually use the client
-            >>> client.bulk_service_manager....
 
         """
         self._refresh_token = refresh_token
         self._environment = environment
+        self._username = _username
+        self._password = _password
+        self.client_secret=client_secret,
+        self._devkey = _devkey
         self.client_id = client_id
         self.account_id = account_id
         self.customer_id = customer_id
@@ -59,11 +59,12 @@ class AuthClient:
             account_id=account_id,
             customer_id=customer_id,
             developer_token=developer_token,
-            authentication=authentication)
+            authentication=None)
 
     def _authenticate_with_username(self,
-                                    user_name="UserNameGoesHere",
-                                    password="PasswordGoesHere"):
+                                    user_name,
+                                    password,
+                                    developer_token):
         '''
         Sets the authentication property of the global AuthorizationData instance with PasswordAuthentication.
         '''
@@ -71,6 +72,7 @@ class AuthClient:
             user_name=user_name, password=password)
 
         # Assign this authentication instance to the global authorization_data.
+        self.authorization_data.developer_token = developer_token
         self.authorization_data.authentication = authentication
 
     def authenticate_with_oauth(self):

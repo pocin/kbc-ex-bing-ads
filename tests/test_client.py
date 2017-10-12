@@ -1,6 +1,7 @@
 import pytest
 import os
 from exbingads.client import Client
+import sys
 
 
 def _make_client():
@@ -14,6 +15,19 @@ def _make_client():
     )
     return cl
 
+def _make_sandbox_client():
+    return Client(developer_token='foobar',
+                  client_id=os.getenv("EX_CLIENT_ID"),
+                  _username=os.getenv("EX_SBX_USERNAME"),
+                  _password=os.getenv("EX_SBX_PASSWD"),
+                  _devkey=os.getenv("EX_SBX_DEVKEY"),
+                  environment='sandbox'
+    )
+
+@pytest.fixture
+def sbx():
+    return _make_sandbox_client()
+
 def test_authenticating_client():
     cl = _make_client()
     assert cl.refresh_token is not None
@@ -25,3 +39,10 @@ def client():
 # def test_client_download_report():
 #     pass
 
+def test_client_download_report_predefined_time_sandbox(sbx):
+    out = sbx.download_ad_performance_report(
+        outdir='tests/sandbox/out/tables/',
+        predefined_time='LastSevenDays',
+        complete_data=False
+        )
+    assert os.stat(out).st_size > 0
