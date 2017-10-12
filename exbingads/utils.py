@@ -1,10 +1,17 @@
 from keboola import docker
+import json
 import logging
 from suds import WebFault
+import os
 from functools import wraps
 
 REQUIRED_PARAMS = ['accountId', 'customerId', '#devKey', 'bucket']
 
+class ExtractorError(Exception):
+    pass
+
+class AuthenticationError(ValueError):
+    pass
 
 def parse_config(datadir):
     cfg = docker.Config(datadir)
@@ -144,8 +151,46 @@ def log_soap_errors(f):
             return f(self, *args, **kwargs)
         except WebFault as ex:
             output_webfault_errors(ex)
-            raise
+            raise ExtractorError("Some issues occured with the extractor."
+                                 "Check the job logs.")
         except Exception as ex:
             logging.error(ex)
             raise
     return wrapped
+
+def clean_report(inpath, outdir, suffix='_clean'):
+    """
+    Strip the non-csv header from the reporting_service_manager
+    and save the cleaned report to self.outdir_final (with same filename)
+
+    Args:
+        inpath (str): path/to/report.csv
+        suffix (str): a suffix to append to the cleaned report
+
+    Returns:
+        a new path where report is saved,
+    """
+
+    dirs, fname = os.path.split(inpath)
+    root, extension = os.path.splitext(fname)
+    new_fname = root + '_clean' + extension
+    new_outpath = os.path.join(outdir, new_fname)
+
+    with open(inpath, 'r') as fin, open(new_outpath, 'w') as out:
+        for _ in range(10):
+            next(fin)
+        for line in fin:
+            out.write(line)
+    return new_outpath
+
+def write_manifest(csvpath, bucket, table, incremental, pk_columns=None):
+    logging.info("Creating manifest for %s", csvpath)
+    manifest_path = csvpath + '.manifest'
+    config = {
+        "destination": bucket + '.' + table,
+        "incremental": incremental,
+        "primary_key": pk_columns or [],
+    }
+    with open(manifest_path, 'w') as fh:
+        json.dump(config, fh)
+    return manifest_path
