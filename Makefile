@@ -2,6 +2,8 @@ IMAGE=pocin/kbc-ex-bing-ads
 VERSION=v0.0.1
 BASECOMMAND=docker run -it --rm -v `pwd`:/src -e KBC_DATADIR='/data/' pocin/kbc-ex-bing-ads:latest
 
+build-dev:
+	docker build . -t $(IMAGE):dev
 
 build:
 	docker build . -t $(IMAGE):$(VERSION) -t $(IMAGE):latest
