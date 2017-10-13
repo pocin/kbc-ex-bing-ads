@@ -204,12 +204,19 @@ def parse_statefile(datadir):
        'lastRun': iso8601 timestamp
     }
     """
-    with open(os.path.join(datadir, 'in/state.json'), 'w') as f:
-        try:
-            state = json.load(f)
-        except json.JSONDecodeError:
-            state = {}
-        return state
+    logging.info("Loading statefile")
+    try:
+        with open(os.path.join(datadir, 'in/state.json'), 'r') as f:
+            try:
+                state = json.load(f)
+            except json.JSONDecodeError:
+                logging.info("Statefile is empty")
+                state = {}
+    except FileNotFoundError:
+        logging.info("Statefile doesn't exist")
+        state = {}
+    return state
+
 
 def write_statefile(datadir, new_state):
     """
@@ -219,5 +226,6 @@ def write_statefile(datadir, new_state):
        'lastRun': iso8601 timestamp
     }
     """
+    logging.info("Saving statefile")
     with open(os.path.join(datadir, 'out/state.json'), 'w') as f:
         json.dump(new_state, f)

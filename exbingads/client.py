@@ -166,9 +166,11 @@ class Client(AuthClient):
         "LastFourWeeks", "ThisMonth", "LastMonth", "LastThreeMonths",
         "LastSixMonths", "ThisYear", "LastYear"
     ]
+
+    ad_perf_report_fname = 'AdPerformance.csv'
     # from here
     # https://msdn.microsoft.com/en-us/library/bing-ads-reporting-adperformancereportcolumn.aspx
-    perf_report_columns = ["AccountName", "AccountNumber", "AccountId",
+    ad_perf_report_columns = ["AccountName", "AccountNumber", "AccountId",
                            "CampaignName", "CampaignId", "AdGroupName",
                            "AdId", "AdGroupId", "AdTitle", "AdDescription",
                            "AdType", "CurrencyCode", "AdDistribution", "Impressions",
@@ -262,7 +264,7 @@ class Client(AuthClient):
             end_date=None,
             columns=None,
             aggregation='Daily',
-            report_name='Ad_Performance'):
+            report_name='AdPerformance'):
         '''
         Build a keyword performance report request, including Format, ReportName, Aggregation,
         Scope, Time, Filter, and Columns.
@@ -336,8 +338,7 @@ class Client(AuthClient):
             'ArrayOfAdPerformanceReportColumn')
         # available columns here
 
-        report_columns.AdPerformanceReportColumn.append(
-            columns or self.perf_report_columns)
+        report_columns.AdPerformanceReportColumn.append(columns or self.ad_perf_report_columns)
 
         report_request.Columns = report_columns
 
@@ -346,7 +347,7 @@ class Client(AuthClient):
     @log_soap_errors
     def download_ad_performance_report(self,
                                        outdir='/tmp/exbingads_reports',
-                                       report_filename='AdPerformance.csv',
+                                       report_filename=None,
                                        startDate=None,
                                        endDate=None,
                                        predefinedTime=None,
@@ -357,6 +358,7 @@ class Client(AuthClient):
 
         Also create a manifest for uploading to storage
         """
+        report_filename = report_filename or self.ad_perf_report_fname
         start_date = startDate
         end_date = endDate
         predefined_time = predefinedTime
