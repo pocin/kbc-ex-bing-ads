@@ -290,7 +290,7 @@ class Client(AuthClient):
 
         scope = self.reporting_service.factory.create(
             'AccountThroughAdGroupReportScope')
-        scope.AccountIds = {'long': self.account_id}
+        scope.AccountIds = {'long': self.authorization_data.account_id}
         scope.Campaigns = None
         scope.AdGroups = None
  

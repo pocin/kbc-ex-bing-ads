@@ -1,6 +1,7 @@
 # About
 A V11 bing ads api extractor for Keboola Connection
 API V10 is deprecated on 31.10.2017
+See [this](https://msdn.microsoft.com/en-us/library/bing-ads-api-migration-guide(v=msads.100).aspx#Reporting) for breaking changes. Most notably, there are some differences in column nomenclature
 
 At this moment, this extractor 
 - only really supports downloading AdsPerformance reports.
