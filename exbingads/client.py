@@ -50,6 +50,12 @@ class AuthClient:
         self.client_secret=client_secret,
         self._devkey = _devkey
         self.client_id = client_id
+        if not isinstance(account_id, list):
+            # None for sandbox purposes
+            if isinstance(account_id, (str, int, type(None))):
+                account_id = [account_id]
+            else:
+                raise ValueError("account_id must be a list of accountIds, not '{}'".format(account_id))
         self.account_id = account_id
         self.customer_id = customer_id
         self.CLIENT_STATE = md5(str(datetime.datetime.now()).encode(
@@ -170,21 +176,22 @@ class Client(AuthClient):
     ad_perf_report_fname = 'AdPerformance.csv'
     # from here
     # https://msdn.microsoft.com/en-us/library/bing-ads-reporting-adperformancereportcolumn.aspx
-    ad_perf_report_columns = ["AccountName", "AccountNumber", "AccountId",
-                           "CampaignName", "CampaignId", "AdGroupName",
-                           "AdId", "AdGroupId", "AdTitle", "AdDescription",
-                           "AdType", "CurrencyCode", "AdDistribution", "Impressions",
-                           "Clicks", "Ctr", "AverageCpc", "Spend", "AveragePosition",
-                           "Conversions", "ConversionRate", "CostPerConversion",
-                           "DestinationUrl", "DeviceType", "Language", "DisplayUrl",
-                           "BusinessListingId", "BusinessListingName", "BusinessCategoryId",
-                           "BusinessCategoryName", "AdStatus", "Network", "TopVsOther",
-                           "BidMatchType", "DeliveredMatchType", "DeviceOS", "Assists",
-                           "Revenue", "ReturnOnAdSpend", "CostPerAssist", "RevenuePerConversion",
-                           "RevenuePerAssist", "TrackingTemplate", "CustomParameters",
-                           "FinalURL", "FinalMobileURL", "FinalAppURL", "AccountStatus",
-                           "CampaignStatus", "AdGroupStatus", "TitlePart1", "TitlePart2",
-                           "Path1", "Path2"]
+    ad_perf_report_columns = [
+        "TimePeriod", "AccountName", "AccountNumber", "AccountId",
+        "CampaignName", "CampaignId", "AdGroupName", "AdId",
+        "AdGroupId", "AdTitle", "AdDescription",
+        "AdType", "CurrencyCode", "AdDistribution", "Impressions",
+        "Clicks", "Ctr", "AverageCpc", "Spend", "AveragePosition",
+        "Conversions", "ConversionRate", "CostPerConversion",
+        "DestinationUrl", "DeviceType", "Language", "DisplayUrl",
+        "BusinessListingId", "BusinessListingName", "BusinessCategoryId",
+        "BusinessCategoryName", "AdStatus", "Network", "TopVsOther",
+        "BidMatchType", "DeliveredMatchType", "DeviceOS", "Assists",
+        "Revenue", "ReturnOnAdSpend", "CostPerAssist", "RevenuePerConversion",
+        "RevenuePerAssist", "TrackingTemplate", "CustomParameters",
+        "FinalURL", "FinalMobileURL", "FinalAppURL", "AccountStatus",
+        "CampaignStatus", "AdGroupStatus", "TitlePart1", "TitlePart2",
+        "Path1", "Path2"]
 
 
 
@@ -283,7 +290,7 @@ class Client(AuthClient):
 
         scope = self.reporting_service.factory.create(
             'AccountThroughAdGroupReportScope')
-        scope.AccountIds = {'long': [self.authorization_data.account_id]}
+        scope.AccountIds = {'long': self.account_id}
         scope.Campaigns = None
         scope.AdGroups = None
  
