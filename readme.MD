@@ -4,10 +4,12 @@ API V10 is deprecated on 31.10.2017
 See [this](https://msdn.microsoft.com/en-us/library/bing-ads-api-migration-guide(v=msads.100).aspx#Reporting) for breaking changes. Most notably, there are some differences in column nomenclature
 
 At this moment, this extractor 
-- only really supports downloading AdsPerformance reports.
-- **custom date ranges do not work** (I suspect it's an API bug), so you can only use `predefinedTime` parameter
+- supports downloading AdsPerformance reports using  
+  - custom date ranges
+  - predefinedTimes (recommended as it creates an overlapping window, ideal for incremental loads)
 
 ## Config
+### Predefined time (Recommended)
 Here is a sample config (this one should work)
 
 This config will 
@@ -43,7 +45,36 @@ This config will
 }
 }
 ```
-# Developer info (safe to ignore)
+
+### Using custom ranges
+
+
+```
+{
+    "#devKey": "1234cbas",
+    "customerId": 12345,
+    "accountId": [1234566], # always an array
+    "bucket": "in.c-ex-bingads-v11",
+    "completeData": false,
+    "incremental": true,
+    "reportRequests": [
+        {
+            "type": "AdsPerformance",
+            "startDate": "23-06-2017", #dd-mm-yyyy format, if you omit endDate parameter, 'today' is used
+            "aggregation": "Daily",
+            "columns": [], #leave blank for all columns
+            "pkey": [
+                "AccountId", "GregorianDate", "CampaignId", "AdId",
+                "AdGroupId", "AdType", "Device_type", "Language", "Network",
+                "TopVsOther", "BiddedMatchType", "MatchType", "DeviceOS"
+                ]
+        }
+    ]
+}
+}
+```
+
+# Developer info (safe to ignore for end users)
 
 Get bingads user info here https://developers.bingads.microsoft.com/Account
 Get a dev token here https://developers.bingads.microsoft.com/Account
