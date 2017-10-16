@@ -301,6 +301,7 @@ class Client(AuthClient):
 
         # can supply either predefined time or start/end date
         # if both are defined, the predefined time has priority over custom
+        report_time.PredefinedTime = None
         if predefined_time is not None:
             if predefined_time in self.predefined_times:
                 logging.info(
