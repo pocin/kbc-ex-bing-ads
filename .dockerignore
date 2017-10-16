@@ -1,3 +1,6 @@
 .git
 config.json
 tests/test_env.sh
+tests/sandbox.ipynb
+**/.ipynb_checkpoints
+**/__pycache__
