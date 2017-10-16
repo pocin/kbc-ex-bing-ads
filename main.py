@@ -24,12 +24,12 @@ import traceback
 import sys
 import os
 from exbingads.extractor import main
-from exbingads.utils import ExtractorError
+from exbingads.utils import ExtractorError, AuthenticationError
 
 if __name__ == "__main__":
     try:
         main(os.getenv("KBC_DATADIR"))
-    except (ValueError, ExtractorError) as e:
+    except (ValueError, ExtractorError, AuthenticationError) as e:
         traceback.print_exc(file=sys.stderr)
         sys.exit(1)
     except:

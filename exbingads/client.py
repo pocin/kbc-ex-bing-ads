@@ -22,6 +22,7 @@ class AuthClient:
                  client_id,
                  client_secret=None,
                  refresh_token=None,
+                 access_token=None,
                  customer_id=None,
                  account_id=None,
                  environment='production',
@@ -32,7 +33,7 @@ class AuthClient:
         This class only manages authentication and you generally dont need to use
         it, rather use the Client child class
 
-        For use in keboola (non-interactive) you must supply refresh token (OAuth bundle manages this)
+        For use in keboola (non-interactive) you must supply just access_token (OAuth bundle manages this)
         otherwise you will be prompted for user consent which is interactive.
 
         Args:
@@ -48,6 +49,7 @@ class AuthClient:
         self._username = _username
         self._password = _password
         self.client_secret=client_secret,
+        self.access_token = access_token
         self._devkey = _devkey
         self.client_id = client_id
         if not isinstance(account_id, list):
@@ -95,8 +97,8 @@ class AuthClient:
             client_secret=self.client_secret,
             redirection_uri='http://localhost',
             oauth_tokens=OAuthTokens(
-                access_token=None,
-                access_token_expires_in_seconds=0,
+                access_token=self.access_token,
+                access_token_expires_in_seconds=3600,
                 refresh_token=self.refresh_token))
 
         # It is recommended that you specify a non guessable 'state' request parameter to help prevent
@@ -115,15 +117,16 @@ class AuthClient:
             if self.refresh_token is not None:
                 self.authorization_data.authentication.request_oauth_tokens_by_refresh_token(
                     self.refresh_token)
-            else:
+            elif self.access_token is not None:
+                logging.info("Using access_token")
                 # If using this not in kbc, call this method for interactive authorization
                 # self._request_user_consent()
+            else:
                 raise AuthenticationError(
-                    "For use in keboola you must supply a refresh token in the "
+                    "For use in keboola you must supply a access_token in the "
                     "configuration. For interactive use, call the"
                     "self._request_user_consent() method to trigger "
-                    "the auth process"
-                                          "")
+                    "the auth process")
         except OAuthTokenRequestException as e:
             # The user could not be authenticated or the grant is expired.
             # The user must first sign in and if needed grant the client application access to the requested scope.
