@@ -1,3 +1,13 @@
+# custom stuff
+config*.json
+**/*.ipynb
+
+# ENV values for running tests
+tests/test_env.sh
+tests/data/out
+tests/sandbox
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
