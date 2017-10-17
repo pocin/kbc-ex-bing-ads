@@ -53,11 +53,11 @@ class AuthClient:
         self._devkey = _devkey
         self.client_id = client_id
         if not isinstance(account_id, list):
-            # None for sandbox purposes
-            if isinstance(account_id, (str, int, type(None))):
+            if isinstance(account_id, (str, int)):
                 account_id = [account_id]
-            else:
+            elif not isinstance(account_id, type(None)):
                 raise ValueError("account_id must be a list of accountIds, not '{}'".format(account_id))
+        # either an array of account_ids or a None(null) to get all accountIds for given account
         self.account_id = account_id
         self.customer_id = customer_id
         self.CLIENT_STATE = md5(str(datetime.datetime.now()).encode(
@@ -339,7 +339,7 @@ class Client(AuthClient):
                     yesterday.day, yesterday.month, yesterday.year)
                 # Default to yesterday
                 logging.info(
-                    "Building report with endTime %s (yesterday),"
+                    "Building report with endTime %s (today),"
                     " because endTime parameter is not set.", yesterday)
                 report_time.CustomDateRangeEnd = custom_date_range_end
 
@@ -380,7 +380,7 @@ class Client(AuthClient):
             logging.debug("outdir %s already exists", outdir)
             pass
         logging.info("Downloading performance report for account_id %s",
-                     self.account_id)
+                     self.account_id or "all accounts")
         report_request = self._get_ad_performance_report_request(
             predefined_time=predefined_time,
             start_date=start_date,
