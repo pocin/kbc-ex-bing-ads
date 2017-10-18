@@ -9,7 +9,9 @@
         "oauth_api":{
             "id": "foobar",
             "credentials": {
-                "#data": "[\"foo\"]"
+                "#data": "[\"foo\"]",
+                "appKey": "foo",
+                "#appSecret": "bar"
             }
         }
     }

@@ -2,11 +2,13 @@ from exbingads.utils import parse_config, write_manifest, clean_report
 import os
 
 def test_parsing_config():
-    params, oauth = parse_config('/src/tests/data')
+    params, oauth, clid, secret = parse_config('/src/tests/data')
     assert len(params) == 4
     assert isinstance(params, dict)
     assert params['bucket'] == 'out.c-main'
     assert oauth == ["foo"]
+    assert clid == "foo"
+    assert secret == "bar"
 
 
 def test_writing_manifest(tmpdir):
