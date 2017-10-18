@@ -30,22 +30,35 @@ def main(datadir):
         last_run = datetime.datetime.strptime(last_run, '%Y-%m-%d').date()
     for report_conf in params.get('reportRequests'):
         if report_conf['type'] == 'AdsPerformance':
-            report_path = download_ad_performance_report(client,
-                                                         report_conf,
-                                                         since_last,
-                                                         last_run,
-                                                         outdir=final_outdir)
-            if not report_path:
-                #write an empty table
-                logging.warning("Report was empty, generating a dummy csv file!")
-                report_path = os.path.join(final_outdir, client.ad_perf_report_fname)
-                with open(report_path, 'w') as f:
-                    writer = csv.writer(f)
-                    writer.writerow(report_conf.get('columns') or client.ad_perf_report_columns)
-
+            dl_params = parse_config_to_download_params(report_conf,
+                                                          since_last,
+                                                          last_run,
+                                                          outdir=final_outdir)
+            report_path = client.ad_performance_report(**dl_params)
             write_manifest(report_path,
                             params.get('bucket'),
                             table='AdsPerformance',
+                            incremental=params.get('incremental', False),
+                            pk_columns=report_conf.get('pkey')
+            )
+
+        if report_conf['type'] == 'KeywordPerformance':
+            dl_params = parse_config_to_download_params(report_conf,
+                                                        since_last,
+                                                        last_run,
+                                                        outdir=final_outdir)
+            report_path = client.keyword_performance_report(**dl_params)
+            if not report_path:
+                #write an empty table
+                logging.warning("Report was empty, generating a dummy csv file!")
+                report_path = os.path.join(final_outdir, client.keyword_perf_report_fname)
+                with open(report_path, 'w') as f:
+                    writer = csv.writer(f)
+                    writer.writerow(report_conf.get('columns') or client.keyword_perf_report_columns)
+
+            write_manifest(report_path,
+                            params.get('bucket'),
+                            table='KeywordPerformance',
                             incremental=params.get('incremental', False),
                             pk_columns=report_conf.get('pkey')
             )
@@ -53,14 +66,15 @@ def main(datadir):
     new_state['lastRun'] = str(datetime.datetime.now().date())
     write_statefile(datadir, new_state)
 
-def download_ad_performance_report(
-        client,
+def parse_config_to_download_params(
         config,
         since_last,
         last_run,
         outdir='/data/out/tables'):
     """
     Decide how to download the report based on config
+
+    Handle the time logic related to downloads
 
     The reports are at first downloaded to outdir (tmp dir in this case, since
     we will process them later on)
@@ -71,7 +85,6 @@ def download_ad_performance_report(
         elif ex was ran already and sinceLast is defined, use the value from statefile
 
     elif startDate and endDate is specified, download that
-
     """
     download_params = {
         'completeData': config.get('completeData', True),
@@ -118,6 +131,32 @@ def download_ad_performance_report(
             "Not sure what to do. config: %s"
             "since_last %s"
             "last_run %s", config, since_last, last_run)
+    return download_params
 
-    report_path = client.download_ad_performance_report(**download_params)
+
+def download_ad_performance_report(
+        client,
+        config,
+        since_last,
+        last_run,
+        outdir='/data/out/tables'):
+    """
+    Download teh AdPerformance report
+    """
+    download_params = parse_config_to_download_params(config, since_last, last_run, outdir)
+    report_path = client.ad_performance_report(**download_params)
+    return report_path
+
+
+def download_keyword_performance_report(
+        client,
+        config,
+        since_last,
+        last_run,
+        outdir='/data/out/tables'):
+    """
+    Download teh KeywordPerformance report
+    """
+    download_params = parse_config_to_download_params(config, since_last, last_run, outdir)
+    report_path = client.keyword_performance_report(**download_params)
     return report_path

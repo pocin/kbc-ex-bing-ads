@@ -1,9 +1,11 @@
 import pytest
 import os
 from exbingads.client import Client
-from exbingads.extractor import download_ad_performance_report
+from exbingads.extractor import download_ad_performance_report, download_keyword_performance_report
 import datetime
 import sys
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 
 def _make_client():
@@ -41,7 +43,7 @@ def client():
 
 def test_client_download_report_predefined_time(client):
 
-    out = client.download_ad_performance_report(
+    out = client.ad_performance_report(
         outdir='tests/data/out/tables/',
         predefinedTime='LastSevenDays'
         )
@@ -51,7 +53,7 @@ def test_client_download_report_predefined_time(client):
     # - maybe we might write an empty csv??
 
 def test_client_download_report_predefined_time_sandbox(sbx):
-    out = sbx.download_ad_performance_report(
+    out = sbx.ad_performance_report(
         outdir='tests/sandbox/out/tables/',
         predefinedTime='LastSevenDays',
         completeData=False
@@ -136,4 +138,24 @@ def test_downloading_reports_since_last_false(sbx):
     }
     out = download_ad_performance_report(sbx, config, since_last=False, last_run=None,
                                       outdir='/tmp/exbingads_reports/sl_false')
+    assert os.stat(out).st_size > 0
+
+
+
+def test_downloading_keyword_reports_predefined_time_sandbox(sbx):
+    """
+    Scenario 1
+    predefinedTime is set, everything else is ignored
+    """
+    config = {
+        'predefinedTime': 'LastSevenDays',
+        'completeData': False,
+        'aggregation': 'Daily',
+    }
+    # since should be is ignored
+    out = download_keyword_performance_report(sbx,
+                                              config,
+                                              since_last='foobar',
+                                              last_run=None,
+                                              outdir='/tmp/exbingads_reports/predef')
     assert os.stat(out).st_size > 0

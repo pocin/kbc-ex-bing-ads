@@ -5,6 +5,7 @@ from bingads.v11.reporting import *
 import sys
 import webbrowser
 import json
+import csv
 from time import gmtime, strftime
 import datetime
 from suds import WebFault
@@ -177,6 +178,7 @@ class Client(AuthClient):
     ]
 
     ad_perf_report_fname = 'AdPerformance.csv'
+    keyword_perf_report_fname = 'KeywordPerformance.csv'
     # from here
     # https://msdn.microsoft.com/en-us/library/bing-ads-reporting-adperformancereportcolumn.aspx
     ad_perf_report_columns = [
@@ -196,7 +198,22 @@ class Client(AuthClient):
         "CampaignStatus", "AdGroupStatus", "TitlePart1", "TitlePart2",
         "Path1", "Path2"]
 
-
+    keyword_perf_report_columns = [
+        "AccountName", "AccountNumber", "AccountId", "TimePeriod",
+        "CampaignName", "CampaignId", "AdGroupName", "AdGroupId",
+        "Keyword", "KeywordId", "AdId", "AdType", "DestinationUrl",
+        "CurrentMaxCpc", "CurrencyCode", "DeliveredMatchType",
+        "AdDistribution", "Impressions", "Clicks", "Ctr", "AverageCpc",
+        "Spend", "AveragePosition", "Conversions", "ConversionRate",
+        "CostPerConversion", "BidMatchType", "DeviceType", "QualityScore",
+        "ExpectedCtr", "AdRelevance", "LandingPageExperience", "Language",
+        "HistoricQualityScore", "HistoricExpectedCtr", "HistoricAdRelevance",
+        "HistoricLandingPageExperience", "QualityImpact", "CampaignStatus",
+        "AccountStatus", "AdGroupStatus", "KeywordStatus", "Network",
+        "TopVsOther", "Assists", "Revenue", "ReturnOnAdSpend",
+        "CostPerAssist", "RevenuePerConversion", "RevenuePerAssist",
+        "TrackingTemplate", "CustomParameters", "FinalURL", "FinalMobileURL",
+        "FinalAppURL", "BidStrategyType"]
 
     def __init__(self, *auth_args, **auth_kwargs):
         """
@@ -266,45 +283,22 @@ class Client(AuthClient):
         custom_date_range.Year = year
         return custom_date_range
 
-    def _get_ad_performance_report_request(
-            self,
-            predefined_time=None,
-            complete_data=False,
-            start_date=None,
-            end_date=None,
-            columns=None,
-            aggregation='Daily',
-            report_name='AdPerformance'):
-        '''
-        Build a keyword performance report request, including Format, ReportName, Aggregation,
-        Scope, Time, Filter, and Columns.
+    def _build_report_time(self, predefined_time=None, start_date=None, end_date=None):
+        """handles logic of parsing times
 
-        '''
-
-        logging.info("Building AdPerformance report request")
-        report_request = self.reporting_service.factory.create('AdPerformanceReportRequest')
-        report_request.Format = 'Csv'
-        report_request.ReportName = report_name
-        report_request.ReturnOnlyCompleteData = complete_data
-        report_request.Aggregation = aggregation
-        report_request.Language = 'English'
-        report_request.ExcludeReportFooter = True
-        report_request.ExcludeReportHeader = True
-
-        scope = self.reporting_service.factory.create(
-            'AccountThroughAdGroupReportScope')
-        scope.AccountIds = {'long': self.authorization_data.account_id}
-        scope.Campaigns = None
-        scope.AdGroups = None
- 
-        report_request.Scope = scope
-
+        """
+        logging.debug("Builiding report time with args,"
+                      "predefined_time=%s"
+                      "start_date=%s"
+                      "end_date=%s", predefined_time, start_date, end_date)
         report_time = self.reporting_service.factory.create('ReportTime')
         # You may either use a custom date range or predefined time.
 
         # can supply either predefined time or start/end date
         # if both are defined, the predefined time has priority over custom
         report_time.PredefinedTime = None
+        report_time.CustomDateRangeStart = None
+        report_time.CustomDateRangeEnd = None
         if predefined_time is not None:
             if predefined_time in self.predefined_times:
                 logging.info(
@@ -342,6 +336,96 @@ class Client(AuthClient):
                     "Building report with endTime %s (today),"
                     " because endTime parameter is not set.", yesterday)
                 report_time.CustomDateRangeEnd = custom_date_range_end
+        return report_time
+
+
+    @log_soap_errors
+    def _get_keyword_performance_report_request(
+            self,
+            predefined_time=None,
+            start_date=None,
+            end_date=None,
+            columns=None,
+            aggregation='Daily',
+            complete_data=False,
+            report_name='KeywordPerformance'):
+        """
+        Build a Ad performance report request, including Format, ReportName, Aggregation,
+        Scope, Time, Filter, and Columns.
+
+        This request is then submitted
+        """
+
+        logging.info("Building KeywordPerformance report request")
+        report_request = self.reporting_service.factory.create('KeywordPerformanceReportRequest')
+        report_request.Format = 'Csv'
+        report_request.ReportName = report_name
+        report_request.ReturnOnlyCompleteData = complete_data
+        report_request.Aggregation = aggregation
+        report_request.Language = 'English'
+        report_request.ExcludeReportFooter = True
+        report_request.ExcludeReportHeader = True
+
+        scope = self.reporting_service.factory.create(
+            'AccountThroughAdGroupReportScope')
+        scope.AccountIds = {'long': self.authorization_data.account_id}
+        scope.Campaigns = None
+        scope.AdGroups = None
+
+        report_request.Scope = scope
+
+        report_time = self._build_report_time(predefined_time=predefined_time,
+                                              start_date=start_date,
+                                              end_date=end_date)
+
+        report_request.Time = report_time
+
+        report_columns = self.reporting_service.factory.create(
+            'ArrayOfKeywordPerformanceReportColumn')
+        # available columns here
+
+        report_columns.KeywordPerformanceReportColumn.append(columns or self.keyword_perf_report_columns)
+        report_request.Columns = report_columns
+
+        return report_request
+
+    def _get_ad_performance_report_request(
+            self,
+            predefined_time=None,
+            complete_data=False,
+            start_date=None,
+            end_date=None,
+            columns=None,
+            aggregation='Daily',
+            report_name='AdPerformance'):
+        '''
+        Build a Ad performance report request, including Format, ReportName, Aggregation,
+        Scope, Time, Filter, and Columns.
+
+
+        '''
+
+        logging.info("Building AdPerformance report request")
+        report_request = self.reporting_service.factory.create('AdPerformanceReportRequest')
+        report_request.Format = 'Csv'
+        report_request.ReportName = report_name
+        report_request.ReturnOnlyCompleteData = complete_data
+        report_request.Aggregation = aggregation
+        report_request.Language = 'English'
+        report_request.ExcludeReportFooter = True
+        report_request.ExcludeReportHeader = True
+
+        scope = self.reporting_service.factory.create(
+            'AccountThroughAdGroupReportScope')
+        scope.AccountIds = {'long': self.authorization_data.account_id}
+        scope.Campaigns = None
+        scope.AdGroups = None
+
+        report_request.Scope = scope
+
+        report_time = self._build_report_time(predefined_time=predefined_time,
+                                              start_date=start_date,
+                                              end_date=end_date)
 
         report_request.Time = report_time
 
@@ -356,24 +440,10 @@ class Client(AuthClient):
         return report_request
 
     @log_soap_errors
-    def download_ad_performance_report(self,
-                                       outdir='/tmp/exbingads_reports',
-                                       report_filename=None,
-                                       startDate=None,
-                                       endDate=None,
-                                       predefinedTime=None,
-                                       completeData=True,
-                                       columns=None,
-                                       aggregation='Daily'):
-        """Send a request for downloading the report, wait for completition
-
-        Also create a manifest for uploading to storage
-        """
-        report_filename = report_filename or self.ad_perf_report_fname
-        start_date = startDate
-        end_date = endDate
-        predefined_time = predefinedTime
-        complete_data = completeData
+    def _download_generic_report(self,
+                                 report_request,
+                                 outdir,
+                                 report_filename):
         try:
             os.makedirs(outdir)
         except FileExistsError:
@@ -381,12 +451,6 @@ class Client(AuthClient):
             pass
         logging.info("Downloading performance report for account_id %s",
                      self.account_id or "all accounts")
-        report_request = self._get_ad_performance_report_request(
-            predefined_time=predefined_time,
-            start_date=start_date,
-            end_date=end_date,
-            complete_data=complete_data,
-            aggregation=aggregation)
 
         reporting_download_parameters = ReportingDownloadParameters(
             report_request=report_request,
@@ -404,9 +468,75 @@ class Client(AuthClient):
             logging.info("Report downloaded to %s", outpath)
         return outpath
 
-    def _clean_date(self, dt):
+    def ad_performance_report(self,
+                              outdir='/tmp/exbingads_reports',
+                              report_filename=None,
+                              startDate=None,
+                              endDate=None,
+                              predefinedTime=None,
+                              completeData=True,
+                              columns=None,
+                              aggregation='Daily'):
+        """Send a request for downloading the report, wait for completition
+
+        Also create a manifest for uploading to storage
+
+        Args:
+            predefinedTime (str): one of the allowed times
+            stratDate (str): '%d-%m-%Y' string or a datetime object
+            endDate (str): '%d-%m-%Y' string or a datetime object
+        """
+        report_request = self._get_ad_performance_report_request(
+            predefined_time=predefinedTime,
+            start_date=startDate,
+            end_date=endDate,
+            complete_data=completeData,
+            aggregation=aggregation)
+        final_report_fname = report_filename or self.ad_perf_report_fname
+        outpath = self._download_generic_report(report_request, outdir, final_report_fname)
+        if outpath is None:
+            outpath = os.path.join(outdir, final_report_fname)
+            self._write_dummy_csv(outpath, columns or self.ad_perf_report_columns)
+        return outpath
+
+    def _write_dummy_csv(self, outpath, columns):
+        #write an empty table
+        logging.warning("Report was empty, generating a dummy csv file!")
+        with open(outpath, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerow(columns)
+
+    def keyword_performance_report(self,
+                                   outdir='/tmp/exbingads_reports',
+                                   report_filename=None,
+                                   startDate=None,
+                                   endDate=None,
+                                   predefinedTime=None,
+                                   completeData=False,
+                                   columns=None,
+                                   aggregation='Daily'):
+        """download the keyword performance report
+
+        """
+        report_request = self._get_keyword_performance_report_request(
+            predefined_time=predefinedTime,
+            start_date=startDate,
+            end_date=endDate,
+            columns=columns,
+            complete_data=completeData,
+            aggregation=aggregation)
+
+        final_report_fname =  report_filename or self.keyword_perf_report_fname
+        outpath = self._download_generic_report(report_request, outdir,final_report_fname)
+        if outpath is None:
+            outpath = os.path.join(outdir, final_report_fname)
+            self._write_dummy_csv(outpath, columns or self.keyword_perf_report_columns)
+        return outpath
+
+    @staticmethod
+    def _clean_date(dt):
         if isinstance(dt, str):
-            start_dt = datetime.strptime(dt, '%d-%m-%Y').date()
+            start_dt = datetime.datetime.strptime(dt, '%d-%m-%Y').date()
         elif isinstance(dt, (datetime.datetime, datetime.date)):
             start_dt = dt
         else:
