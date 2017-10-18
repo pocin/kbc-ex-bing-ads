@@ -178,8 +178,6 @@ class Client(AuthClient):
         "LastSixMonths", "ThisYear", "LastYear"
     ]
 
-    ad_perf_report_fname = 'AdPerformance.csv'
-    keyword_perf_report_fname = 'KeywordPerformance.csv'
     # from here
     # https://msdn.microsoft.com/en-us/library/bing-ads-reporting-adperformancereportcolumn.aspx
     ad_perf_report_columns = [
@@ -461,17 +459,26 @@ class Client(AuthClient):
             timeout_in_milliseconds=self.timeout_ms)
 
         logging.info("Initiating download")
-        outpath = self.reporting_service_manager.download_file(
-            reporting_download_parameters)
-        if outpath is not None:
+        outpath = self.reporting_service_manager.download_file(reporting_download_parameters)
+        if outpath is None:
             logging.info("No data was downloaded, perhaps no campaigns are running?")
+            outpath = os.path.join(outdir, report_filename)
+            # in the column setup the col is named TimePeriod,
+            # but when downloaded it's GregorianDate
+            # so for the sake of consistency we do this
+            final_columns = [c if c!= 'TimePeriod' else 'GregorianDate'
+                             for c
+                             in report_request.Columns['AdPerformanceReportColumn'][0]
+            ]
+
+            self._write_dummy_csv(outpath, final_columns)
         else:
             logging.info("Report downloaded to %s", outpath)
         return outpath
 
     def ad_performance_report(self,
                               outdir='/tmp/exbingads_reports',
-                              report_filename=None,
+                              report_filename='AdPerformance.csv',
                               startDate=None,
                               endDate=None,
                               predefinedTime=None,
@@ -493,11 +500,7 @@ class Client(AuthClient):
             end_date=endDate,
             complete_data=completeData,
             aggregation=aggregation)
-        final_report_fname = report_filename or self.ad_perf_report_fname
-        outpath = self._download_generic_report(report_request, outdir, final_report_fname)
-        if outpath is None:
-            outpath = os.path.join(outdir, final_report_fname)
-            self._write_dummy_csv(outpath, columns or self.ad_perf_report_columns)
+        outpath = self._download_generic_report(report_request, outdir, report_filename)
         return outpath
 
     def _write_dummy_csv(self, outpath, columns):
@@ -509,7 +512,7 @@ class Client(AuthClient):
 
     def keyword_performance_report(self,
                                    outdir='/tmp/exbingads_reports',
-                                   report_filename=None,
+                                   report_filename='KeywordPerformance.csv',
                                    startDate=None,
                                    endDate=None,
                                    predefinedTime=None,
@@ -527,11 +530,7 @@ class Client(AuthClient):
             complete_data=completeData,
             aggregation=aggregation)
 
-        final_report_fname =  report_filename or self.keyword_perf_report_fname
-        outpath = self._download_generic_report(report_request, outdir,final_report_fname)
-        if outpath is None:
-            outpath = os.path.join(outdir, final_report_fname)
-            self._write_dummy_csv(outpath, columns or self.keyword_perf_report_columns)
+        outpath = self._download_generic_report(report_request, outdir, report_filename)
         return outpath
 
     @staticmethod

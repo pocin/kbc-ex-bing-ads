@@ -48,14 +48,6 @@ def main(datadir):
                                                         last_run,
                                                         outdir=final_outdir)
             report_path = client.keyword_performance_report(**dl_params)
-            if not report_path:
-                #write an empty table
-                logging.warning("Report was empty, generating a dummy csv file!")
-                report_path = os.path.join(final_outdir, client.keyword_perf_report_fname)
-                with open(report_path, 'w') as f:
-                    writer = csv.writer(f)
-                    writer.writerow(report_conf.get('columns') or client.keyword_perf_report_columns)
-
             write_manifest(report_path,
                             params.get('bucket'),
                             table='KeywordPerformance',
