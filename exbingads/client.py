@@ -114,15 +114,15 @@ class AuthClient:
         self.authorization_data.authentication.token_refreshed_callback = lambda x: self._save_refresh_token(x)
 
         try:
-            # If we have a refresh token let's refresh it
-            if self.refresh_token is not None:
-                logging.info("Using refresh_token to get access_token")
-                self.authorization_data.authentication.request_oauth_tokens_by_refresh_token(
-                    self.refresh_token)
-            elif self.access_token is not None:
+            if self.access_token is not None:
                 logging.info("Using access_token")
                 # If using this not in kbc, call this method for interactive authorization
                 # self._request_user_consent()
+            # If we have a refresh token let's refresh it
+            elif self.refresh_token is not None:
+                logging.info("Using refresh_token to get access_token")
+                self.authorization_data.authentication.request_oauth_tokens_by_refresh_token(
+                    self.refresh_token)
             else:
                 raise AuthenticationError(
                     "For use in keboola you must supply a access_token in the "
@@ -466,9 +466,13 @@ class Client(AuthClient):
             # in the column setup the col is named TimePeriod,
             # but when downloaded it's GregorianDate
             # so for the sake of consistency we do this
+
+            # We need to filter out either '{kw}PerformanceReportColumn
+            # where kw isin {'Ad','Keyword'}
+            typ = [a for a in dir(report_request.Columns) if 'PerformanceReportColumn' in a][0]
             final_columns = [c if c!= 'TimePeriod' else 'GregorianDate'
                              for c
-                             in report_request.Columns['AdPerformanceReportColumn'][0]
+                             in report_request.Columns[typ][0]
             ]
 
             self._write_dummy_csv(outpath, final_columns)
