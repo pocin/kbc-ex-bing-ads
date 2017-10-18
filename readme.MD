@@ -4,7 +4,7 @@ API V10 is deprecated on 31.10.2017
 See [this](https://msdn.microsoft.com/en-us/library/bing-ads-api-migration-guide(v=msads.100).aspx#Reporting) for breaking changes. Most notably, there are some differences in column nomenclature
 
 At this moment, this extractor 
-- supports downloading AdsPerformance reports using  
+- supports downloading AdsPerformance and KeywordPerformance reports using  
   - custom date ranges
   - predefinedTimes (recommended as it creates an overlapping window, ideal for incremental loads)
 
@@ -68,7 +68,25 @@ This config will
                 "AdGroupId", "AdType", "Device_type", "Language", "Network",
                 "TopVsOther", "BiddedMatchType", "MatchType", "DeviceOS"
                 ]
-        }
+        },
+        {
+          "type": "KeywordPerformance",
+          "predefinedTime": "LastSevenDays",
+          "columns": [],
+                  "pkey": ["AccountNumber",
+                               "AccountId",
+                               "GregorianDate",
+                               "CampaignId",
+                               "AdGroupId",
+                               "KeywordId",
+                               "AdId",
+                               "Network",
+                               "DeviceType",
+                               "BidMatchType",
+                               "DeliveredMatchType",
+                               "AdDistribution",
+                               "Bid strategy type"
+                ]
     ]
 }
 }
