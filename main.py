@@ -20,6 +20,7 @@ Config:
   }
 
 """
+import resource
 import traceback
 import sys
 import os
@@ -37,3 +38,5 @@ if __name__ == "__main__":
     except:
         traceback.print_exc(file=sys.stderr)
         sys.exit(2)
+    finally:
+        logging.info("max memory usage %s bytes/kilobytes?", resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
