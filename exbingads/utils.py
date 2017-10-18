@@ -19,7 +19,8 @@ def parse_config(datadir):
     for p in REQUIRED_PARAMS:
         if p not in params:
             raise ValueError("config parameter '{}' must be defined".format(p))
-    return params
+    oauth = cfg.get_oauthapi_data()
+    return params, oauth
 
 
 def output_bing_ads_webfault_error(error):

@@ -4,5 +4,13 @@
         "customerId": "bar",
         "#devKey": 123,
         "bucket": "out.c-main"
+    },
+    "authorization":{
+        "oauth_api":{
+            "id": "foobar",
+            "credentials": {
+                "#data": "[\"foo\"]"
+            }
+        }
     }
 }

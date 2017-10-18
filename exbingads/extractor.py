@@ -8,13 +8,13 @@ import csv
 
 
 def main(datadir):
-    params = parse_config(datadir)
+    params, oauth = parse_config(datadir)
     client = Client(
         developer_token=params['#devKey'],
         client_id=params.get('client_id', 'dummy'),
-        refresh_token=params.get('refresh_token'),
-        access_token=params.get('access_token'),
-        client_secret=params.get('client_secret'),
+        refresh_token=oauth['refresh_token'],
+        access_token=oauth['access_token'],
+        client_secret=None,
         customer_id=params['customerId'],
         account_id=params['accountId'],
         environment='production'
