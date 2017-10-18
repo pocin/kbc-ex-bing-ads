@@ -25,6 +25,8 @@ import sys
 import os
 from exbingads.extractor import main
 from exbingads.utils import ExtractorError, AuthenticationError
+import logging
+logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
     try:

@@ -116,6 +116,7 @@ class AuthClient:
         try:
             # If we have a refresh token let's refresh it
             if self.refresh_token is not None:
+                logging.info("Using refresh_token to get access_token")
                 self.authorization_data.authentication.request_oauth_tokens_by_refresh_token(
                     self.refresh_token)
             elif self.access_token is not None:
