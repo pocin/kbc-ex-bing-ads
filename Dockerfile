@@ -4,7 +4,7 @@ MAINTAINER Robin robin@keboola.com
 RUN apk add --no-cache python3 git && \
     python3 -m ensurepip && \
     rm -r /usr/lib/python*/ensurepip && \
-    pip3 install --upgrade pip setuptools && \ 
+    pip3 install --upgrade pip setuptools && \
     if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi && \
     rm -r /root/.cache
 
@@ -17,5 +17,6 @@ RUN pip install --no-cache-dir --ignore-installed \
 
 RUN mkdir -p /data/out/tables /data/in/tables
 COPY . /src/
+COPY ./custom_operations.py /usr/lib/python3.6/site-packages/bingads/v11/reporting/reporting_operation.py
 WORKDIR /src
 CMD python3 -u /src/main.py

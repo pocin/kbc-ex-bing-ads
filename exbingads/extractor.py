@@ -79,7 +79,7 @@ def parse_config_to_download_params(
     elif startDate and endDate is specified, download that
     """
     download_params = {
-        'completeData': config.get('completeData', True),
+        'completeData': config.get('completeData', False),
         'outdir': outdir,
         'predefinedTime': None,
         'startDate': None,

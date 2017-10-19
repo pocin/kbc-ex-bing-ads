@@ -486,7 +486,7 @@ class Client(AuthClient):
                               startDate=None,
                               endDate=None,
                               predefinedTime=None,
-                              completeData=True,
+                              completeData=False,
                               columns=None,
                               aggregation='Daily'):
         """Send a request for downloading the report, wait for completition
