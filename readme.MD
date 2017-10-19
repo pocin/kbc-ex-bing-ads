@@ -13,8 +13,8 @@ At this moment, this extractor
 Here is a sample config (this one should work)
 
 This config will 
-- download `AdPerformance` report for given customer/accountId. You can select up to 1000 accountIds, so you dont have to create an extractor config for each account.
-- Save output to `in.c-ex-bingads-v11.AdPerformance`
+- download `AdPerformance` and `KeywordPerformance` report for given customer/accountId. You can select up to 1000 accountIds, so you dont have to create an extractor config for each account.
+- Save output to `in.c-ex-bingads-v11.AdPerformance` and `in.c-ex-bingads-v11.KeywordPerformance`, respectively
 - The time period will be `LastSevenDays` (for a complete list of `predefinedTimes` see [this](https://msdn.microsoft.com/en-us/library/bing-ads-reporting-reporttimeperiod.aspx)).
 - The table will be loaded incrementally, for this to work properly, don't forget to set `pkey` parameter which defines primary key columns. In this case, the pkey should be sufficient for correct incremental loading
 - It will download all possible columns (`columns` parameter is `[]`) for this report. See [this](https://msdn.microsoft.com/en-us/library/bing-ads-reporting-adperformancereportcolumn.aspx) if you want just a subset. (**Caveat** - a column name `TimePeriod` denotes the timestamp, but is named `GregorianDate` in the final report!)
@@ -25,7 +25,7 @@ This config will
 {
     "#devKey": "1234cbas",
     "customerId": 12345,
-    "accountId": [1234566], # always an array
+    "accountId": [1234566], # an array of accountIds or null (which fetches all accounts for given customerId)
     "bucket": "in.c-ex-bingads-v11",
     "completeData": false,
     "incremental": true,
@@ -37,9 +37,14 @@ This config will
             "columns": [],
             "pkey": [
                 "AccountId", "GregorianDate", "CampaignId", "AdId",
-                "AdGroupId", "AdType", "Device_type", "Language", "Network",
-                "TopVsOther", "BiddedMatchType", "MatchType", "DeviceOS"
+                "AdGroupId", "AdType", "DeviceType", "Language", "Network",
+                "TopVsOther", "BidMatchType", "MatchType", "DeviceOS"
                 ]
+        },
+        {
+          "type": "KeywordPerformance",
+          "predefinedTime": "LastSevenDays",
+          "columns": []
         }
     ]
 }
@@ -65,28 +70,15 @@ This config will
             "columns": [], #leave blank for all columns
             "pkey": [
                 "AccountId", "GregorianDate", "CampaignId", "AdId",
-                "AdGroupId", "AdType", "Device_type", "Language", "Network",
-                "TopVsOther", "BiddedMatchType", "MatchType", "DeviceOS"
+                "AdGroupId", "AdType", "DeviceType", "Language", "Network",
+                "TopVsOther", "BidMatchType", "MatchType", "DeviceOS"
                 ]
         },
         {
           "type": "KeywordPerformance",
           "predefinedTime": "LastSevenDays",
-          "columns": [],
-                  "pkey": ["AccountNumber",
-                               "AccountId",
-                               "GregorianDate",
-                               "CampaignId",
-                               "AdGroupId",
-                               "KeywordId",
-                               "AdId",
-                               "Network",
-                               "DeviceType",
-                               "BidMatchType",
-                               "DeliveredMatchType",
-                               "AdDistribution",
-                               "Bid strategy type"
-                ]
+          "columns": []
+        }
     ]
 }
 }
