@@ -11,12 +11,11 @@ RUN apk add --no-cache python3 git && \
 RUN pip install --no-cache-dir --ignore-installed \
 		pytest==3.2.3\
 		requests==2.18.4\
-    bingads==11.5.5.1\
+    bingads==11.5.6\
     pytest-cov==2.5.1\
     && pip install --upgrade --no-cache-dir --ignore-installed git+git://github.com/keboola/python-docker-application.git@2.0.0
 
 RUN mkdir -p /data/out/tables /data/in/tables
 COPY . /src/
-COPY ./custom_operations.py /usr/lib/python3.6/site-packages/bingads/v11/reporting/reporting_operation.py
 WORKDIR /src
 CMD python3 -u /src/main.py
