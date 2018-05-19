@@ -1,5 +1,5 @@
 IMAGE=pocin/kbc-ex-bing-ads
-VERSION=v0.5.3
+VERSION=v0.5.4
 BASECOMMAND=docker run -it --rm -v `pwd`:/src -e KBC_DATADIR='/data/' --memory=256m --memory-swap=256m pocin/kbc-ex-bing-ads:latest
 
 build-dev:
